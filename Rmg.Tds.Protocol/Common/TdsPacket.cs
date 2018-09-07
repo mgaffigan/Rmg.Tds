@@ -2,7 +2,7 @@
 
 namespace Rmg.Tds.Protocol
 {
-    internal class TdsPacket
+    public sealed class TdsPacket
     {
         public TdsPacketHeader Header { get; }
         public byte[] Data { get; }

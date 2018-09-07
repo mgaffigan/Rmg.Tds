@@ -148,7 +148,7 @@ namespace Rmg.Tds.Protocol.Client
             }
         }
 
-        public async Task<TdsMessage> ReceiveAsync()
+        public async Task<TdsMessage> ReceiveAsync(ITdsClientReceiveSink sink = null)
         {
             lock (syncReadCommand)
             {
@@ -160,7 +160,7 @@ namespace Rmg.Tds.Protocol.Client
             }
             try
             {
-                var result = await ReadMessageAsync();
+                var result = await ReceiveInternalAsync(sink ?? new NullTdsReceiveSink());
                 InspectForEnvChange(result);
                 return result;
             }
@@ -171,6 +171,53 @@ namespace Rmg.Tds.Protocol.Client
                     IsReadCommandActive = false;
                 }
             }
+        }
+
+        private async Task<TdsMessage> ReceiveInternalAsync(ITdsClientReceiveSink sink)
+        {
+            var firstPacket = await ReadPacketAsync();
+            bool isHandledByPacketSink = await sink.HandlePacket(firstPacket);
+
+            if (firstPacket.Header.Statuses.HasFlag(TdsPacketStatuses.EndOfMessage))
+            {
+                // single packet message
+                var message = new TdsMessage(firstPacket.Header.Type, firstPacket.Header.Statuses.AsMessageStatuses(),
+                    firstPacket.Data, SerializationContext);
+                await sink.HandleMessage(message, isHandledByPacketSink);
+                return message;
+            }
+            else
+            {
+                // multi packet message
+                var statuses = firstPacket.Header.Statuses;
+                var msResult = new MemoryStream(firstPacket.Header.DataLength * 3);
+                msResult.Write(firstPacket.Data);
+
+                while (!statuses.HasFlag(TdsPacketStatuses.EndOfMessage))
+                {
+                    var secondPacket = await ReadPacketAsync();
+                    if (isHandledByPacketSink)
+                    {
+                        await sink.HandlePacket(secondPacket);
+                    }
+
+                    statuses = secondPacket.Header.Statuses;
+                    msResult.Write(secondPacket.Data);
+                }
+
+                var message = new TdsMessage(firstPacket.Header.Type, statuses.AsMessageStatuses(),
+                    msResult.ToArray(), SerializationContext);
+                await sink.HandleMessage(message, isHandledByPacketSink);
+                return message;
+            }
+        }
+
+        private async Task<TdsPacket> ReadPacketAsync()
+        {
+            var header = new TdsPacketHeader(await Socket.ReceiveExactSizeAsync(TdsPacketHeader.HeaderLength));
+            var data = await Socket.ReceiveExactSizeAsync(header.DataLength);
+
+            return new TdsPacket(header, data);
         }
 
         private void InspectForEnvChange(TdsMessage msg)
@@ -200,39 +247,5 @@ namespace Rmg.Tds.Protocol.Client
                 }
             }
         }
-
-        private async Task<TdsMessage> ReadMessageAsync()
-        {
-            var firstPacket = await ReadPacketAsync();
-            if (firstPacket.Header.Statuses.HasFlag(TdsPacketStatuses.EndOfMessage))
-            {
-                return new TdsMessage(firstPacket.Header.Type, firstPacket.Header.Statuses.AsMessageStatuses(), 
-                    firstPacket.Data, SerializationContext);
-            }
-
-            var statuses = firstPacket.Header.Statuses;
-            var msResult = new MemoryStream(firstPacket.Header.DataLength * 3);
-            msResult.Write(firstPacket.Data);
-
-            while (!statuses.HasFlag(TdsPacketStatuses.EndOfMessage))
-            {
-                var secondPacket = await ReadPacketAsync();
-
-                statuses = secondPacket.Header.Statuses;
-                msResult.Write(secondPacket.Data);
-            }
-
-            return new TdsMessage(firstPacket.Header.Type, statuses.AsMessageStatuses(),
-                msResult.ToArray(), SerializationContext);
-        }
-
-        private async Task<TdsPacket> ReadPacketAsync()
-        {
-            var header = new TdsPacketHeader(await Socket.ReceiveExactSizeAsync(TdsPacketHeader.HeaderLength));
-            var data = await Socket.ReceiveExactSizeAsync(header.DataLength);
-
-            return new TdsPacket(header, data);
-        }
-
     }
 }

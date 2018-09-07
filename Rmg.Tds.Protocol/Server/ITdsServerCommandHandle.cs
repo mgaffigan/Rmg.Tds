@@ -13,5 +13,7 @@ namespace Rmg.Tds.Protocol.Server
         void Complete();
 
         Task WriteResponseAsync(TdsMessage message);
+
+        Task WritePartialResponseAsync(TdsPacket packet);
     }
 }

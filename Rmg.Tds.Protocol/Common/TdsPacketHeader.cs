@@ -79,5 +79,10 @@ namespace Rmg.Tds.Protocol
             Serialize(arr);
             return arr;
         }
+
+        public override string ToString()
+        {
+            return $"Type: {Type} Statuses: {Statuses} Data: {DataLength} bytes";
+        }
     }
 }

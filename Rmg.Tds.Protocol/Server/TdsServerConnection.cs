@@ -116,7 +116,7 @@ namespace Rmg.Tds.Protocol.Server
             var firstPacket = await ReadPacketAsync(cancelOn0: true);
             if (firstPacket.Header.Statuses.HasFlag(TdsPacketStatuses.EndOfMessage))
             {
-                return new TdsMessage(firstPacket.Header.Type, firstPacket.Header.Statuses.AsMessageStatuses(), 
+                return new TdsMessage(firstPacket.Header.Type, firstPacket.Header.Statuses.AsMessageStatuses(),
                     firstPacket.Data, SerializationContext);
             }
 
@@ -141,7 +141,7 @@ namespace Rmg.Tds.Protocol.Server
                 msResult.Write(secondPacket.Data);
             }
 
-            return new TdsMessage(firstPacket.Header.Type, statuses.AsMessageStatuses(), 
+            return new TdsMessage(firstPacket.Header.Type, statuses.AsMessageStatuses(),
                 msResult.ToArray(), SerializationContext);
         }
 
@@ -166,7 +166,7 @@ namespace Rmg.Tds.Protocol.Server
                 this.Parent = parent ?? throw new ArgumentNullException(nameof(parent));
                 this.CTS = new CancellationTokenSource();
             }
-            
+
             internal async Task HandleMessageAsync(TdsMessage message)
             {
                 if (message == null)
@@ -210,19 +210,18 @@ namespace Rmg.Tds.Protocol.Server
 
                 return Parent.WriteResponseAsync(message);
             }
+
+            public Task WritePartialResponseAsync(TdsPacket packet)
+            {
+                CTS.Token.ThrowIfCancellationRequested();
+
+                return Parent.WriteResponseAsync(packet);
+            }
         }
 
         private async Task WriteResponseAsync(TdsMessage message)
         {
-            lock (syncWriteCommand)
-            {
-                if (IsWriteCommandActive)
-                {
-                    throw new InvalidOperationException("Write request already active");
-                }
-                IsWriteCommandActive = false;
-            }
-            try
+            await SyncWrite(async () =>
             {
                 this.SerializationContext = message.Context;
 
@@ -251,6 +250,39 @@ namespace Rmg.Tds.Protocol.Server
                     i = iEnd;
                 }
                 while (i < message.Data.Length);
+            });
+        }
+
+        private async Task WriteResponseAsync(TdsPacket packet)
+        {
+            await SyncWrite(async () =>
+            {
+                var packetData = new[]
+                {
+                    new ArraySegment<byte>(packet.Header.ToArray()),
+                    new ArraySegment<byte>(packet.Data)
+                };
+                var sent = await Socket.SendAsync(packetData, SocketFlags.None);
+                if (sent != packet.Header.Length)
+                {
+                    throw new ProtocolViolationException("Write completed partially");
+                }
+            });
+        }
+
+        private async Task SyncWrite(Func<Task> func)
+        {
+            lock (syncWriteCommand)
+            {
+                if (IsWriteCommandActive)
+                {
+                    throw new InvalidOperationException("Write request already active");
+                }
+                IsWriteCommandActive = false;
+            }
+            try
+            {
+                await func();
             }
             finally
             {

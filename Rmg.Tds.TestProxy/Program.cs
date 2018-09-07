@@ -27,9 +27,10 @@ namespace Rmg.Tds.TestProxy
         }
     }
 
-    internal class ProxyHandler : ITdsServerHandler
+    internal class ProxyHandler : ITdsServerHandler, ITdsClientReceiveSink
     {
         private readonly Task<TdsClientConnection> UpstreamConnectionPromise;
+        private ITdsServerCommandHandle handle;
 
         public ProxyHandler()
         {
@@ -38,20 +39,44 @@ namespace Rmg.Tds.TestProxy
 
         public async Task HandleMessageAsync(TdsMessage message, ITdsServerCommandHandle handle)
         {
+            this.handle = handle;
             handle.MessageHandler = SendMessageInternalAsync;
             await SendMessageInternalAsync(message);
-            ReadAsync(handle);
+            ReadAsync();
         }
 
-        private async void ReadAsync(ITdsServerCommandHandle handle)
+        private async void ReadAsync()
         {
             while (true)
             {
                 var target = await UpstreamConnectionPromise;
-                var resp = await target.ReceiveAsync();
-                //Console.ForegroundColor = ConsoleColor.Gray;
-                //Console.WriteLine($"Received {resp.Type} from server");
-                resp = InspectResponse(resp);
+                await target.ReceiveAsync(this);
+            }
+        }
+
+        async Task<bool> ITdsClientReceiveSink.HandlePacket(TdsPacket packet)
+        {
+            if (LastRequest == TdsPacketType.SqlBatch
+                || LastRequest == TdsPacketType.RPC)
+            {
+                // do not inspect responses 
+                Console.ForegroundColor = ConsoleColor.Gray;
+                Console.WriteLine($"Forwarding packet {{{packet.Header}}} without inspection");
+                await handle.WritePartialResponseAsync(packet);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        async Task ITdsClientReceiveSink.HandleMessage(TdsMessage resp, bool wasHandledPerPacket)
+        {
+            // even if we forwarded the packets, we still need to update our state
+            resp = InspectResponse(resp);
+            if (!wasHandledPerPacket)
+            {
                 await handle.WriteResponseAsync(resp);
             }
         }
