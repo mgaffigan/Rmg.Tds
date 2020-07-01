@@ -9,4 +9,8 @@
     <ProjectReference Include="..\Rmg.Tds.Protocol\Rmg.Tds.Protocol.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Translations\" />
+  </ItemGroup>
+
 </Project>
