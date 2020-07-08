@@ -30,7 +30,20 @@ namespace Rmg.Tds.Protocol
             this.Value = value;
         }
 
-        public RpcRequestParameter WithNewValue(object value)
+        public static RpcRequestParameter ForNVarChar(string paramName, string value, TdsVersion version)
+        {
+            if (value == null)
+            {
+                return new RpcRequestParameter(paramName, default, TdsTypeInfo.Null(version), null);
+            }
+            else
+            {
+                return new RpcRequestParameter(paramName, default,
+                    TdsTypeInfo.NVarchar(version, value.Length, new TdsTypeCollation()), value);
+            }
+        }
+
+        public RpcRequestParameter WithNewValue(object value, string newName = null)
         {
             if (Value.GetType() != value.GetType())
             {
@@ -42,7 +55,7 @@ namespace Rmg.Tds.Protocol
                 typeInfo = typeInfo.ForNewValue(value);
             }
 
-            return new RpcRequestParameter(Name, Statuses, typeInfo, value);
+            return new RpcRequestParameter(newName ?? Name, Statuses, typeInfo, value);
         }
 
         public int SerializedLength =>

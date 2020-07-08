@@ -145,6 +145,12 @@ namespace Rmg.Tds.Protocol
             }
         }
 
+        public static TdsTypeInfo NVarchar(TdsVersion version, int length, TdsTypeCollation collation)
+            => new TdsTypeInfo(version, TdsDataType.NVarChar, length: length * 2, collation: collation);
+
+        public static TdsTypeInfo Null(TdsVersion version)
+            => new TdsTypeInfo(version, TdsDataType.Null);
+
         public TdsTypeInfo With(int? precision = null, int? scale = null, int? length = null,
             TdsTypeCollation? collation = null, XmlTypeInfo xmlTypeInfo = null,
             UdtTypeInfo udtTypeInfo = null, TvpTypeInfo tvpTypeInfo = null)
@@ -202,6 +208,11 @@ namespace Rmg.Tds.Protocol
             }
 
             return ValueParser.GetSerializedValueLength(value, this);
+        }
+
+        public string GetSqlTypeName()
+        {
+            return Type.NameFormatter.GetNameForType(this);
         }
 
         internal void SerializeValue(ref TdsPayloadWriter writer, object value)

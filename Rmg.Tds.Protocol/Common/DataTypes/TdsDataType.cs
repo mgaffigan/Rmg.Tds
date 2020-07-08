@@ -60,52 +60,52 @@ namespace Rmg.Tds.Protocol
     {
         private static readonly TdsDataTypeDict KnownTypes = new TdsDataTypeDict()
         {
-            { Bit, PM.FixedLen, 1, new BoolParser(), false, false, false, false, false },
-            { DateN, PM.ByteLen, null, new ByteLenParser(), false, false, false, false, true },
-            { TimeN, PM.ByteLen, null, new ByteLenParser(), false, false, true, false, true },
-            { DateTime2N, PM.ByteLen, null, new FixedByteLenParser(), false, false, true, false, true },
-            { DateTimeOffsetN, PM.ByteLen, null, new FixedByteLenParser(), false, false, true, false, true },
-            { DecimalN, PM.ByteLen, null, new ByteLenParser(), false, true, true, false, true },
-            { NumericN, PM.ByteLen, null, new ByteLenParser(), false, true, true, false, true },
-            { Guid, PM.ByteLen, null, new GuidParser(), false, false, false, false, true },
-            { Int1, PM.FixedLen, 1, new Int1Parser(), false, false, false, false, false },
-            { Int2, PM.FixedLen, 2, new Int2Parser(), false, false, false, false, false },
-            { Int4, PM.FixedLen, 4, new Int4Parser(), false, false, false, false, false },
-            { DateTime4, PM.FixedLen, 4, new Int4Parser(), false, false, false, false, false },
-            { Float4, PM.FixedLen, 4, new Int4Parser(), false, false, false, false, false },
-            { Money4, PM.FixedLen, 4, new Int4Parser(), false, false, false, false, false },
-            { Money, PM.FixedLen, 8, new Int8Parser(), false, false, false, false, false },
-            { DateTime, PM.FixedLen, 8, new Int8Parser(), false, false, false, false, false },
-            { Float8, PM.FixedLen, 8, new Int8Parser(), false, false, false, false, false },
-            { Int8, PM.FixedLen, 8, new Int8Parser(), false, false, false, false, false },
-            { Image, PM.LongLen, null, new LongLenParser(), false, false, false, false, true },
-            { SSVariant, PM.LongLen, null, new LongLenParser(), false, false, false, false, true },
-            { Text, PM.LongLen, null, new TextParser(), false, false, false, true, true },
-            { NText, PM.LongLen, null, new NTextParser(), false, false, false, true, true },
-            { VarBinary, PM.ByteLen, null, new NotSupportedParser(), false, false, false, false, true },
-            { VarChar, PM.ByteLen, null, new NotSupportedParser(), false, false, false, false, true },
-            { Binary, PM.ByteLen, null, new NotSupportedParser(), false, false, false, false, true },
-            { Char, PM.ByteLen, null, new NotSupportedParser(), false, false, false, false, true },
-            { Decimal, PM.ByteLen, null, new NotSupportedParser(), false, true, true, false, true },
-            { Numeric, PM.ByteLen, null, new NotSupportedParser(), false, true, true, false, true },
-            { Table, PM.Table, null, new NotSupportedParser(), false, false, false, false, false },
-            { Udt, PM.Udt, null, new NotSupportedParser(), true, false, false, false, false },
-            { Xml, PM.Xml, null, new NotSupportedParser(), true, false, false, false, false },
-            { BigVarBinary, PM.UShortLen, null, new NotSupportedParser(), true, false, false, false, true },
-            { BigVarChar, PM.UShortLen, null, new NotSupportedParser(), true, false, false, true, true },
-            { NVarChar, PM.UShortLen, null, new NotSupportedParser(), true, false, false, true, true },
-            { IntN, PM.ByteLen, null, new NullableIntParser(), false, false, false, false, true },
-            { BitN, PM.ByteLen, null, new NullableIntParser(), false, false, false, false, true },
-            { FloatN, PM.ByteLen, null, new NullableIntParser(), false, false, false, false, true },
-            { MoneyN, PM.ByteLen, null, new NullableIntParser(), false, false, false, false, true },
-            { DateTimeN, PM.ByteLen, null, new NullableIntParser(), false, false, false, false, true },
-            { Null, PM.FixedLen, 0, new NullParser(), false, false, false, false, false },
-            { NChar, PM.UShortLen, null, new NVarcharParser(), false, false, false, true, true },
-            { BigBinary, PM.UShortLen, null, new VarbinaryParser(), false, false, false, false, true },
-            { BigChar, PM.UShortLen, null, new VarcharParser(), false, false, false, true, true },
+            { Bit, PM.FixedLen, 1, new BoolParser(), false, false, false, false, false, new SimpleTypeNameFormatter("bit") },
+            { DateN, PM.ByteLen, null, new ByteLenParser(), false, false, false, false, true, new SimpleTypeNameFormatter("date") },
+            { TimeN, PM.ByteLen, null, new ByteLenParser(), false, false, true, false, true, new ScaleTypeNameFormatter("time") },
+            { DateTime2N, PM.ByteLen, null, new FixedByteLenParser(), false, false, true, false, true, new ScaleTypeNameFormatter("datetime2") },
+            { DateTimeOffsetN, PM.ByteLen, null, new FixedByteLenParser(), false, false, true, false, true, new ScaleTypeNameFormatter("datetimeoffset") },
+            { DecimalN, PM.ByteLen, null, new ByteLenParser(), false, true, true, false, true, new PrecisionScaleTypeNameFormatter("decimal") },
+            { NumericN, PM.ByteLen, null, new ByteLenParser(), false, true, true, false, true, new PrecisionScaleTypeNameFormatter("numeric") },
+            { Guid, PM.ByteLen, null, new GuidParser(), false, false, false, false, true, new SimpleTypeNameFormatter("uniqueidentifier") },
+            { Int1, PM.FixedLen, 1, new Int1Parser(), false, false, false, false, false, new SimpleTypeNameFormatter("tinyint") },
+            { Int2, PM.FixedLen, 2, new Int2Parser(), false, false, false, false, false, new SimpleTypeNameFormatter("smallint") },
+            { Int4, PM.FixedLen, 4, new Int4Parser(), false, false, false, false, false, new SimpleTypeNameFormatter("int") },
+            { DateTime4, PM.FixedLen, 4, new Int4Parser(), false, false, false, false, false, new SimpleTypeNameFormatter("smalldatetime") },
+            { Float4, PM.FixedLen, 4, new Int4Parser(), false, false, false, false, false, new SimpleTypeNameFormatter("float(24)") },
+            { Money4, PM.FixedLen, 4, new Int4Parser(), false, false, false, false, false, new SimpleTypeNameFormatter("smallmoney") },
+            { Money, PM.FixedLen, 8, new Int8Parser(), false, false, false, false, false, new SimpleTypeNameFormatter("money") },
+            { DateTime, PM.FixedLen, 8, new Int8Parser(), false, false, false, false, false, new SimpleTypeNameFormatter("datetime") },
+            { Float8, PM.FixedLen, 8, new Int8Parser(), false, false, false, false, false, new SimpleTypeNameFormatter("float(53)") },
+            { Int8, PM.FixedLen, 8, new Int8Parser(), false, false, false, false, false, new SimpleTypeNameFormatter("bigint") },
+            { Image, PM.LongLen, null, new LongLenParser(), false, false, false, false, true, new SimpleTypeNameFormatter("image") },
+            { SSVariant, PM.LongLen, null, new LongLenParser(), false, false, false, false, true, new SimpleTypeNameFormatter("sql_variant") },
+            { Text, PM.LongLen, null, new TextParser(), false, false, false, true, true, new SimpleTypeNameFormatter("text") },
+            { NText, PM.LongLen, null, new NTextParser(), false, false, false, true, true, new SimpleTypeNameFormatter("ntext") },
+            { VarBinary, PM.ByteLen, null, new NotSupportedParser(), false, false, false, false, true, new LengthTypeNameFormatter("varbinary") },
+            { VarChar, PM.ByteLen, null, new NotSupportedParser(), false, false, false, false, true, new LengthTypeNameFormatter("varbinary") },
+            { Binary, PM.ByteLen, null, new NotSupportedParser(), false, false, false, false, true, new LengthTypeNameFormatter("binary") },
+            { Char, PM.ByteLen, null, new NotSupportedParser(), false, false, false, false, true, new LengthTypeNameFormatter("char") },
+            { Decimal, PM.ByteLen, null, new NotSupportedParser(), false, true, true, false, true, new PrecisionScaleTypeNameFormatter("decimal") },
+            { Numeric, PM.ByteLen, null, new NotSupportedParser(), false, true, true, false, true, new PrecisionScaleTypeNameFormatter("numeric") },
+            { Table, PM.Table, null, new NotSupportedParser(), false, false, false, false, false, new TableTypeNameFormatter() },
+            { Udt, PM.Udt, null, new NotSupportedParser(), true, false, false, false, false, new UdtTypeNameFormatter() },
+            { Xml, PM.Xml, null, new NotSupportedParser(), true, false, false, false, false, new SimpleTypeNameFormatter("xml") },
+            { BigVarBinary, PM.UShortLen, null, new NotSupportedParser(), true, false, false, false, true, new LengthTypeNameFormatter("varbinary") },
+            { BigVarChar, PM.UShortLen, null, new NotSupportedParser(), true, false, false, true, true, new LengthTypeNameFormatter("varchar") },
+            { NVarChar, PM.UShortLen, null, new NotSupportedParser(), true, false, false, true, true, new LengthTypeNameFormatter("nvarchar") },
+            { IntN, PM.ByteLen, null, new NullableIntParser(), false, false, false, false, true, new IntNTypeNameFormatter() },
+            { BitN, PM.ByteLen, null, new NullableIntParser(), false, false, false, false, true, new SimpleTypeNameFormatter("bit") },
+            { FloatN, PM.ByteLen, null, new NullableIntParser(), false, false, false, false, true, new FloatTypeNameFormatter() },
+            { MoneyN, PM.ByteLen, null, new NullableIntParser(), false, false, false, false, true, new MoneyTypeNameFormatter() },
+            { DateTimeN, PM.ByteLen, null, new NullableIntParser(), false, false, false, false, true, new SimpleTypeNameFormatter("datetime") },
+            { Null, PM.FixedLen, 0, new NullParser(), false, false, false, false, false, new SimpleTypeNameFormatter("int") },
+            { NChar, PM.UShortLen, null, new NVarcharParser(), false, false, false, true, true, new LengthTypeNameFormatter("nchar") },
+            { BigBinary, PM.UShortLen, null, new VarbinaryParser(), false, false, false, false, true, new LengthTypeNameFormatter("binary") },
+            { BigChar, PM.UShortLen, null, new VarcharParser(), false, false, false, true, true, new LengthTypeNameFormatter("char") },
         };
 
-        internal TdsDataTypeInfo(TdsDataType type, TdsDataTypeParsingMode parsingMode, int? fixedLen, IDataTypeParser parser, bool isPartLen, bool hasPrecision, bool hasScale, bool hasCollation, bool hasLength)
+        internal TdsDataTypeInfo(TdsDataType type, TdsDataTypeParsingMode parsingMode, int? fixedLen, IDataTypeParser parser, bool isPartLen, bool hasPrecision, bool hasScale, bool hasCollation, bool hasLength, IDataTypeNameFormatter nameFormatter)
         {
             this.Type = type;
             this.ParseMode = parsingMode;
@@ -116,6 +116,7 @@ namespace Rmg.Tds.Protocol
             this.HasScale = hasScale;
             this.HasCollation = hasCollation;
             this.HasLength = hasLength;
+            this.NameFormatter = nameFormatter;
         }
 
         public TdsDataType Type { get; }
@@ -127,12 +128,13 @@ namespace Rmg.Tds.Protocol
         public bool HasScale { get; }
         public bool HasCollation { get; }
         public bool HasLength { get; }
+        internal IDataTypeNameFormatter NameFormatter { get; }
 
         private class TdsDataTypeDict : Dictionary<TdsDataType, TdsDataTypeInfo>
         {
-            public void Add(TdsDataType type, TdsDataTypeParsingMode parsingMode, int? fixedLen, IDataTypeParser parser, bool isPartLen, bool hasPrecision, bool hasScale, bool hasCollation, bool hasLength)
+            public void Add(TdsDataType type, TdsDataTypeParsingMode parsingMode, int? fixedLen, IDataTypeParser parser, bool isPartLen, bool hasPrecision, bool hasScale, bool hasCollation, bool hasLength, IDataTypeNameFormatter nameFormatter)
             {
-                this.Add(type, new TdsDataTypeInfo(type, parsingMode, fixedLen, parser, isPartLen, hasPrecision, hasScale, hasCollation, hasLength));
+                this.Add(type, new TdsDataTypeInfo(type, parsingMode, fixedLen, parser, isPartLen, hasPrecision, hasScale, hasCollation, hasLength, nameFormatter));
             }
         }
 

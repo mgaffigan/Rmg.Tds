@@ -9,6 +9,7 @@ namespace Rmg.Tds.Protocol
     {
         ByRef = 1,
         DefaultValue = 2,
-        Encrypted = 8
+        Encrypted = 8,
+        None = 0
     }
 }
