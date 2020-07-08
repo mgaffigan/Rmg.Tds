@@ -4,16 +4,21 @@ namespace Rmg.Tds.TestProxy
 {
     internal class ProxyHandlerFactory : ITdsServerHandlerFactory
     {
-        private readonly SqlTranslationTable TranslationTable;
+        private SqlTranslationTable TranslationTable;
 
         public ProxyHandlerFactory()
         {
-            this.TranslationTable = new SqlTranslationTable(@"C:\Users\mgaffigan\source\repos\Rmg.Tds\Rmg.Tds.TestProxy\Translations");
+            ReloadTranslationTable();
+        }
+
+        public SqlTranslationTable ReloadTranslationTable()
+        {
+            return this.TranslationTable = new SqlTranslationTable(@"C:\Users\mgaffigan\source\repos\Rmg.Tds\Rmg.Tds.TestProxy\Translations");
         }
 
         public ITdsServerHandler CreateHandler()
         {
-            return new ProxyHandler(TranslationTable);
+            return new ProxyHandler(() => TranslationTable);
         }
     }
 }

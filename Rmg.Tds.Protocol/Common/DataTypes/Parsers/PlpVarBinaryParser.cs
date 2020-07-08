@@ -12,7 +12,7 @@ namespace Rmg.Tds.Protocol.DataTypes
             PLP_NULL = 0xffff_ffff__ffff_fffful,
             PLP_UNKNOWN_LEN = 0xffff_ffff__ffff_fffeul;
 
-        public override byte[] DeserializeValue(ref TdsPayloadReader reader)
+        public override byte[] DeserializeValue(ref TdsPayloadReader reader, TdsTypeInfo type)
         {
             ulong lenOrFlag = reader.ReadInt64LE();
             if (lenOrFlag == PLP_NULL)
@@ -48,7 +48,7 @@ namespace Rmg.Tds.Protocol.DataTypes
             return msResult.ToArray();
         }
 
-        public override void SerializeValue(ref TdsPayloadWriter writer, byte[] value)
+        public override void SerializeValue(ref TdsPayloadWriter writer, byte[] value, TdsTypeInfo type)
         {
             if (value == null)
             {
@@ -62,7 +62,7 @@ namespace Rmg.Tds.Protocol.DataTypes
             writer.WriteInt32LE(0);
         }
 
-        public override int GetSerializedValueLength(byte[] value) => GetPlpLen(value?.Length);
+        public override int GetSerializedValueLength(byte[] value, TdsTypeInfo type) => GetPlpLen(value?.Length);
         public int GetPlpLen(int? valueByteLen)
         {
             if (valueByteLen == null)

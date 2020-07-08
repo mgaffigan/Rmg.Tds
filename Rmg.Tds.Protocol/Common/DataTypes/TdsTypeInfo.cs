@@ -66,36 +66,132 @@ namespace Rmg.Tds.Protocol
                     this.UdtTypeInfo = new UdtTypeInfo(ref reader, version, isPartOfColMetadaData);
                 }
 
-                if (Type.IsPartLen)
-                {
-                    const int MAX_SENTINEL = 0xffff;
-                    switch (Type.Type)
-                    {
-                        case TdsDataType.Udt:
-                        case TdsDataType.Xml:
-                            ValueParser = new PlpVarBinaryParser();
-                            break;
-                        case TdsDataType.BigVarBinary:
-                            ValueParser = Length == MAX_SENTINEL ? (IDataTypeParser)new PlpVarBinaryParser() : new VarbinaryParser();
-                            break;
-                        case TdsDataType.BigVarChar:
-                            ValueParser = Length == MAX_SENTINEL ? (IDataTypeParser)new PlpVarcharParser() : new VarcharParser();
-                            break; ;
-                        case TdsDataType.NVarChar:
-                            ValueParser = Length == MAX_SENTINEL ? (IDataTypeParser)new PlpNVarcharParser() : new NVarcharParser();
-                            break;
-                        default: throw new NotSupportedException("Unknown PLP Type");
-                    }
-                }
-                else
-                {
-                    ValueParser = Type.ValueParser;
-                }
+                ValueParser = CreateValueParser();
             }
             else
             {
                 this.TvpTypeInfo = new TvpTypeInfo(ref reader, version);
             }
+        }
+
+        public TdsTypeInfo(TdsVersion version, TdsDataType dataType,
+            int? precision = null, int? scale = null, int? length = null,
+            TdsTypeCollation? collation = null, XmlTypeInfo xmlTypeInfo = null,
+            UdtTypeInfo udtTypeInfo = null, TvpTypeInfo tvpTypeInfo = null)
+        {
+            this.TdsVersion = version;
+            this.Type = TdsDataTypeInfo.GetForType(dataType);
+
+            if (Type.ParseMode != TdsDataTypeParsingMode.Table)
+            {
+                if (Type.HasPrecision)
+                {
+                    this.Precision = precision ?? throw new ArgumentNullException("Precision required by type");
+                }
+                else if (precision != null)
+                {
+                    throw new ArgumentOutOfRangeException("Precision specified but not supported by type");
+                }
+
+                if (Type.HasScale)
+                {
+                    this.Scale = scale ?? throw new ArgumentNullException("Scale required by type");
+                }
+                else if (scale != null)
+                {
+                    throw new ArgumentOutOfRangeException("Scale specified but not supported by type");
+                }
+
+                if (Type.HasLength)
+                {
+                    this.Length = length ?? throw new ArgumentNullException("Length required by type");
+                }
+                else if (length != null)
+                {
+                    throw new ArgumentOutOfRangeException("Length specified but not supported by type");
+                }
+
+                if (Type.HasCollation)
+                {
+                    this.Collation = collation ?? throw new ArgumentNullException("Collation required by type");
+                }
+                else if (collation != null)
+                {
+                    throw new ArgumentOutOfRangeException("Collation specified but not supported by type");
+                }
+
+                if (Type.ParseMode == TdsDataTypeParsingMode.Xml)
+                {
+                    this.XmlTypeInfo = xmlTypeInfo ?? throw new ArgumentNullException("Xml type info required by type");
+                }
+                else if (Type.ParseMode == TdsDataTypeParsingMode.Udt)
+                {
+                    this.UdtTypeInfo = udtTypeInfo ?? throw new ArgumentNullException("UdtTypeInfo required by type");
+                }
+                else if (xmlTypeInfo != null)
+                {
+                    throw new ArgumentOutOfRangeException("XmlTypeInfo specified but not supported by type");
+                }
+                else if (udtTypeInfo != null)
+                {
+                    throw new ArgumentOutOfRangeException("UdtTypeInfo specified but not supported by type");
+                }
+
+                ValueParser = CreateValueParser();
+            }
+            else
+            {
+                this.TvpTypeInfo = tvpTypeInfo ?? throw new ArgumentNullException("TvpTypeInfo required by type");
+            }
+        }
+
+        public TdsTypeInfo With(int? precision = null, int? scale = null, int? length = null,
+            TdsTypeCollation? collation = null, XmlTypeInfo xmlTypeInfo = null,
+            UdtTypeInfo udtTypeInfo = null, TvpTypeInfo tvpTypeInfo = null)
+        {
+            return new TdsTypeInfo(this.TdsVersion, this.Type.Type,
+                precision: precision ?? Precision,
+                scale: scale ?? Scale,
+                length: length ?? Length,
+                collation: collation ?? Collation,
+                xmlTypeInfo: xmlTypeInfo ?? XmlTypeInfo,
+                udtTypeInfo: udtTypeInfo ?? UdtTypeInfo,
+                tvpTypeInfo: tvpTypeInfo ?? TvpTypeInfo
+            );
+        }
+
+        private IDataTypeParser CreateValueParser()
+        {
+            if (Type.IsPartLen)
+            {
+                const int MAX_SENTINEL = 0xffff;
+                switch (Type.Type)
+                {
+                    case TdsDataType.Udt:
+                    case TdsDataType.Xml:
+                        return new PlpVarBinaryParser();
+                    case TdsDataType.BigVarBinary:
+                        return Length == MAX_SENTINEL ? (IDataTypeParser)new PlpVarBinaryParser() : new VarbinaryParser();
+                    case TdsDataType.BigVarChar:
+                        return Length == MAX_SENTINEL ? (IDataTypeParser)new PlpVarcharParser() : new VarcharParser();
+                    case TdsDataType.NVarChar:
+                        return Length == MAX_SENTINEL ? (IDataTypeParser)new PlpNVarcharParser() : new NVarcharParser();
+                    default: throw new NotSupportedException("Unknown PLP Type");
+                }
+            }
+            else
+            {
+                return Type.ValueParser;
+            }
+        }
+
+        internal TdsTypeInfo ForNewValue(object value)
+        {
+            if (value is string s && this.Type.Type == TdsDataType.NVarChar)
+            {
+                return With(length: s.Length * 2);
+            }
+            else throw new NotImplementedException($"Unsupported type {value.GetType()} for ForNewValue");
         }
 
         internal int GetSerializedValueLength(object value)
@@ -105,7 +201,7 @@ namespace Rmg.Tds.Protocol
                 return 0;
             }
 
-            return ValueParser.GetSerializedValueLength(value);
+            return ValueParser.GetSerializedValueLength(value, this);
         }
 
         internal void SerializeValue(ref TdsPayloadWriter writer, object value)
@@ -115,7 +211,7 @@ namespace Rmg.Tds.Protocol
                 return;
             }
 
-            ValueParser.SerializeValue(ref writer, value);
+            ValueParser.SerializeValue(ref writer, value, this);
         }
 
         internal object DeserializeValue(ref TdsPayloadReader reader)
@@ -125,7 +221,7 @@ namespace Rmg.Tds.Protocol
                 return TvpTypeInfo.Rows;
             }
 
-            return ValueParser.DeserializeValue(ref reader);
+            return ValueParser.DeserializeValue(ref reader, this);
         }
 
         internal int SerializedLength

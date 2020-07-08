@@ -22,6 +22,29 @@ namespace Rmg.Tds.Protocol
             this.Value = this.TypeInfo.DeserializeValue(ref reader);
         }
 
+        public RpcRequestParameter(string name, RpcRequestParameterStatuses statuses, TdsTypeInfo typeInfo, object value)
+        {
+            this.Name = name ?? throw new ArgumentNullException(nameof(name));
+            this.Statuses = statuses;
+            this.TypeInfo = typeInfo;
+            this.Value = value;
+        }
+
+        public RpcRequestParameter WithNewValue(object value)
+        {
+            if (Value.GetType() != value.GetType())
+            {
+                throw new ArgumentOutOfRangeException($"Replacement value type does not match existing type.  Existing: {Value.GetType()}, new: {value.GetType()}");
+            }
+            var typeInfo = TypeInfo;
+            if (typeInfo.Type.HasLength)
+            {
+                typeInfo = typeInfo.ForNewValue(value);
+            }
+
+            return new RpcRequestParameter(Name, Statuses, typeInfo, value);
+        }
+
         public int SerializedLength =>
             1 /* name len */ + (Name.Length * 2)
             + 1 /* status */

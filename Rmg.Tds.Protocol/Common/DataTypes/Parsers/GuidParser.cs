@@ -7,18 +7,18 @@ namespace Rmg.Tds.Protocol.DataTypes
 {
     internal sealed class GuidParser : DataTypeParser<Guid?>
     {
-        public override int GetSerializedValueLength(Guid? value) => value == null ? 0 : 16;
+        public override int GetSerializedValueLength(Guid? value, TdsTypeInfo type) => value == null ? 0 : 16;
 
-        public override void SerializeValue(ref TdsPayloadWriter writer, Guid? value)
+        public override void SerializeValue(ref TdsPayloadWriter writer, Guid? value, TdsTypeInfo type)
         {
-            writer.WriteByte((byte)GetSerializedValueLength(value));
+            writer.WriteByte((byte)GetSerializedValueLength(value, type));
             if (value != null)
             {
                 writer.WriteData(value.Value.ToByteArray());
             }
         }
 
-        public override Guid? DeserializeValue(ref TdsPayloadReader reader)
+        public override Guid? DeserializeValue(ref TdsPayloadReader reader, TdsTypeInfo type)
         {
             var cb = reader.ReadByte();
             if (cb == 0)

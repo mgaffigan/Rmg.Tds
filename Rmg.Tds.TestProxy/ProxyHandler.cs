@@ -4,6 +4,8 @@ using Rmg.Tds.Protocol.Payloads;
 using Rmg.Tds.Protocol.Server;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -11,13 +13,13 @@ namespace Rmg.Tds.TestProxy
 {
     internal class ProxyHandler : ITdsServerHandler, ITdsClientReceiveSink
     {
-        private readonly SqlTranslationTable TranslationTable;
+        private readonly Func<SqlTranslationTable> GetTranslationTable;
         private readonly Task<TdsClientConnection> UpstreamConnectionPromise;
         private ITdsServerCommandHandle handle;
 
-        public ProxyHandler(SqlTranslationTable translationTable)
+        public ProxyHandler(Func<SqlTranslationTable> translationTable)
         {
-            this.TranslationTable = translationTable ?? throw new ArgumentNullException(nameof(translationTable));
+            this.GetTranslationTable = translationTable ?? throw new ArgumentNullException(nameof(translationTable));
             this.UpstreamConnectionPromise = TdsClientConnection.ConnectAsync(new IPEndPoint(IPAddress.Parse("10.200.36.49"), 16143));
         }
 
@@ -159,9 +161,11 @@ namespace Rmg.Tds.TestProxy
                 var sb = msg.DeserializeAs<SqlBatchRequest>();
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("Request: {0}", sb.CommandText);
-                if (sb.CommandText.Contains("{now}"))
+                if (GetTranslationTable().TryApply(sb.CommandText, out string newCommandText, out string replacementName))
                 {
-                    sb = new SqlBatchRequest(sb.Headers, sb.CommandText.Replace("{now}", DateTime.Now.ToString()), sb.TdsVersion);
+                    Console.ForegroundColor = ConsoleColor.Magenta;
+                    Console.WriteLine("   Applying replacement {0}: {1}", replacementName, newCommandText.Trim());
+                    sb = new SqlBatchRequest(sb.Headers, newCommandText, sb.TdsVersion);
                     return msg.WithReplacedPayload(sb);
                 }
                 return msg;
@@ -171,6 +175,34 @@ namespace Rmg.Tds.TestProxy
                 var sb = msg.DeserializeAs<RpcBatchRequest>();
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("Request: {0}", sb);
+                RpcRequest[] replacedRpcRequests = null;
+                for (int i = 0; i < sb.Count; i++)
+                {
+                    var req = sb[i];
+                    if (req.ProcedureName == "sp_executesql" && req.Parameters.Count > 0 && req.Parameters[0].Value is string commandText)
+                    {
+                        if (GetTranslationTable().TryApply(commandText, out string newCommandText, out string replacementName))
+                        {
+                            Console.ForegroundColor = ConsoleColor.Magenta;
+                            Console.WriteLine("   Applying replacement {0}: {1}", replacementName, newCommandText.Trim());
+
+                            if (replacedRpcRequests == null)
+                            {
+                                replacedRpcRequests = ((IReadOnlyList<RpcRequest>)sb).ToArray();
+                            }
+
+                            var parameters = req.Parameters.ToList();
+                            parameters[0] = parameters[0].WithNewValue(newCommandText);
+                            replacedRpcRequests[i] = req.With(parameters: parameters);
+                        }
+                    }
+                }
+                if (replacedRpcRequests != null)
+                {
+                    File.WriteAllBytes("pre.bin", msg.Data);
+                    sb = new RpcBatchRequest(replacedRpcRequests, sb.Headers, sb.TdsVersion);
+                    File.WriteAllBytes("post.bin", sb.ToArray());
+                }
                 return msg.WithReplacedPayload(sb);
             }
             else

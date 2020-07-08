@@ -4,22 +4,30 @@ using System.Text;
 
 namespace Rmg.Tds.Protocol.DataTypes
 {
-    internal class ByteLenParser : DataTypeParser<byte[]>
+    internal class FixedByteLenParser : DataTypeParser<byte[]>
     {
         public override byte[] DeserializeValue(ref TdsPayloadReader reader, TdsTypeInfo type)
         {
-            var len = reader.ReadByte();
-            return reader.ReadData(len);
+            return reader.ReadData(type.Length.Value);
         }
 
         public override int GetSerializedValueLength(byte[] value, TdsTypeInfo type)
         {
-            return 1 + value.Length;
+            if (value.Length != type.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(value), "Wrong length");
+            }
+
+            return value.Length;
         }
 
         public override void SerializeValue(ref TdsPayloadWriter writer, byte[] value, TdsTypeInfo type)
         {
-            writer.WriteByte((byte)value.Length);
+            if (value.Length != type.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(value), "Wrong length");
+            }
+
             writer.WriteData(value);
         }
     }

@@ -6,7 +6,7 @@ namespace Rmg.Tds.Protocol.DataTypes
 {
     internal class LongLenParser : DataTypeParser<byte[]>
     {
-        public override byte[] DeserializeValue(ref TdsPayloadReader reader)
+        public override byte[] DeserializeValue(ref TdsPayloadReader reader, TdsTypeInfo type)
         {
             var len = reader.ReadInt32LE();
             if (len == -1)
@@ -16,13 +16,13 @@ namespace Rmg.Tds.Protocol.DataTypes
             return reader.ReadData(len);
         }
 
-        public override int GetSerializedValueLength(byte[] value)
+        public override int GetSerializedValueLength(byte[] value, TdsTypeInfo type)
         {
             return 4 
                 + (value?.Length ?? 0);
         }
 
-        public override void SerializeValue(ref TdsPayloadWriter writer, byte[] value)
+        public override void SerializeValue(ref TdsPayloadWriter writer, byte[] value, TdsTypeInfo type)
         {
             if (value == null)
             {
@@ -37,7 +37,7 @@ namespace Rmg.Tds.Protocol.DataTypes
 
     internal class NTextParser : DataTypeParser<string>
     {
-        public override string DeserializeValue(ref TdsPayloadReader reader)
+        public override string DeserializeValue(ref TdsPayloadReader reader, TdsTypeInfo type)
         {
             var len = reader.ReadInt32LE();
             if (len == -1)
@@ -47,12 +47,12 @@ namespace Rmg.Tds.Protocol.DataTypes
             return reader.ReadUcs2StringCb(len);
         }
 
-        public override int GetSerializedValueLength(string value)
+        public override int GetSerializedValueLength(string value, TdsTypeInfo type)
         {
             return 4 + (value == null ? 0 : Encoding.Unicode.GetByteCount(value));
         }
 
-        public override void SerializeValue(ref TdsPayloadWriter writer, string value)
+        public override void SerializeValue(ref TdsPayloadWriter writer, string value, TdsTypeInfo type)
         {
             if (value == null)
             {
@@ -67,7 +67,7 @@ namespace Rmg.Tds.Protocol.DataTypes
 
     internal class TextParser : DataTypeParser<string>
     {
-        public override string DeserializeValue(ref TdsPayloadReader reader)
+        public override string DeserializeValue(ref TdsPayloadReader reader, TdsTypeInfo type)
         {
             var len = reader.ReadInt32LE();
             if (len == -1)
@@ -77,12 +77,12 @@ namespace Rmg.Tds.Protocol.DataTypes
             return reader.ReadAsciiString(len);
         }
 
-        public override int GetSerializedValueLength(string value)
+        public override int GetSerializedValueLength(string value, TdsTypeInfo type)
         {
             return 4 + (value?.Length ?? 0);
         }
 
-        public override void SerializeValue(ref TdsPayloadWriter writer, string value)
+        public override void SerializeValue(ref TdsPayloadWriter writer, string value, TdsTypeInfo type)
         {
             if (value == null)
             {

@@ -6,14 +6,14 @@ namespace Rmg.Tds.Protocol.DataTypes
 {
     internal sealed class Int1Parser : DataTypeParser<byte>
     {
-        public override int GetSerializedValueLength(byte value) => 1;
+        public override int GetSerializedValueLength(byte value, TdsTypeInfo type) => 1;
 
-        public override byte DeserializeValue(ref TdsPayloadReader reader)
+        public override byte DeserializeValue(ref TdsPayloadReader reader, TdsTypeInfo type)
         {
             return reader.ReadByte();
         }
 
-        public override void SerializeValue(ref TdsPayloadWriter writer, byte value)
+        public override void SerializeValue(ref TdsPayloadWriter writer, byte value, TdsTypeInfo type)
         {
             writer.WriteByte(value);
         }
@@ -21,14 +21,14 @@ namespace Rmg.Tds.Protocol.DataTypes
 
     internal sealed class Int2Parser : DataTypeParser<short>
     {
-        public override int GetSerializedValueLength(short value) => 2;
+        public override int GetSerializedValueLength(short value, TdsTypeInfo type) => 2;
 
-        public override short DeserializeValue(ref TdsPayloadReader reader)
+        public override short DeserializeValue(ref TdsPayloadReader reader, TdsTypeInfo type)
         {
             return (short)reader.ReadInt16LE();
         }
 
-        public override void SerializeValue(ref TdsPayloadWriter writer, short value)
+        public override void SerializeValue(ref TdsPayloadWriter writer, short value, TdsTypeInfo type)
         {
             writer.WriteInt16LE(value);
         }
@@ -36,14 +36,14 @@ namespace Rmg.Tds.Protocol.DataTypes
 
     internal sealed class Int4Parser : DataTypeParser<int>
     {
-        public override int GetSerializedValueLength(int value) => 4;
+        public override int GetSerializedValueLength(int value, TdsTypeInfo type) => 4;
 
-        public override int DeserializeValue(ref TdsPayloadReader reader)
+        public override int DeserializeValue(ref TdsPayloadReader reader, TdsTypeInfo type)
         {
             return reader.ReadInt32LE();
         }
 
-        public override void SerializeValue(ref TdsPayloadWriter writer, int value)
+        public override void SerializeValue(ref TdsPayloadWriter writer, int value, TdsTypeInfo type)
         {
             writer.WriteInt32LE(value);
         }
@@ -51,14 +51,14 @@ namespace Rmg.Tds.Protocol.DataTypes
 
     internal sealed class Int8Parser : DataTypeParser<ulong>
     {
-        public override int GetSerializedValueLength(ulong value) => 8;
+        public override int GetSerializedValueLength(ulong value, TdsTypeInfo type) => 8;
 
-        public override ulong DeserializeValue(ref TdsPayloadReader reader)
+        public override ulong DeserializeValue(ref TdsPayloadReader reader, TdsTypeInfo type)
         {
             return reader.ReadInt64LE();
         }
 
-        public override void SerializeValue(ref TdsPayloadWriter writer, ulong value)
+        public override void SerializeValue(ref TdsPayloadWriter writer, ulong value, TdsTypeInfo type)
         {
             writer.WriteInt64LE(value);
         }
@@ -66,7 +66,7 @@ namespace Rmg.Tds.Protocol.DataTypes
 
     internal sealed class NullableIntParser : DataTypeParser<object>
     {
-        public override int GetSerializedValueLength(object value)
+        public override int GetSerializedValueLength(object value, TdsTypeInfo type)
         {
             if (value == null)
             {
@@ -91,7 +91,7 @@ namespace Rmg.Tds.Protocol.DataTypes
             else throw new NotSupportedException();
         }
 
-        public override object DeserializeValue(ref TdsPayloadReader reader)
+        public override object DeserializeValue(ref TdsPayloadReader reader, TdsTypeInfo type)
         {
             switch (reader.ReadByte())
             {
@@ -104,9 +104,9 @@ namespace Rmg.Tds.Protocol.DataTypes
             }
         }
 
-        public override void SerializeValue(ref TdsPayloadWriter writer, object value)
+        public override void SerializeValue(ref TdsPayloadWriter writer, object value, TdsTypeInfo type)
         {
-            var len = GetSerializedValueLength(value) - 1;
+            var len = GetSerializedValueLength(value, type) - 1;
             writer.WriteByte((byte)len);
             if (len == 0)
             {

@@ -57,6 +57,28 @@ namespace Rmg.Tds.Protocol
             this.Parameters = parameters.AsReadOnly();
         }
 
+        public RpcRequest(int? procedureId, string procedureName, RpcRequestOptionFlags optionFlags, RpcRequestBatchFlag batchFlag, 
+            IReadOnlyList<RpcRequestParameter> parameters)
+        {
+            if (procedureId.HasValue == (procedureName != null))
+            {
+                throw new ArgumentException("Either procedure ID or procedure name must be specified");
+            }
+
+            if (procedureId.HasValue)
+            {
+                this.ProcedureId = procedureId.Value;
+                this.ProcedureName = NumberedProcedures.TryGetNameForProcedureId(ProcedureId.Value);
+            }
+            else
+            {
+                this.ProcedureName = procedureName;
+            }
+
+            this.OptionFlags = optionFlags;
+            this.BatchFlag = batchFlag;
+            this.Parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
+        }
 
         internal int SerializedLength => 
             2 /* name len */
@@ -116,6 +138,28 @@ namespace Rmg.Tds.Protocol
                 sb.Append(param);
             }
             return sb.ToString();
+        }
+
+        public RpcRequest With(int? procedureId = null, string procedureName = null, List<RpcRequestParameter> parameters = null)
+        {
+            // validate
+            if (procedureId.HasValue && (procedureName != null))
+            {
+                throw new ArgumentException("Either procedure ID or procedure name must be specified");
+            }
+            // Use defaults from this if neither specified
+            if (procedureId == null && procedureName == null)
+            {
+                procedureId = this.ProcedureId;
+                if (procedureId == null)
+                {
+                    procedureName = this.ProcedureName;
+                }
+            }
+
+            return new RpcRequest(procedureId, procedureName, 
+                OptionFlags, BatchFlag,
+                parameters ?? this.Parameters);
         }
     }
 }

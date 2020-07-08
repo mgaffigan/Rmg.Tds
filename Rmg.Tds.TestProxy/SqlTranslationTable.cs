@@ -17,5 +17,21 @@ namespace Rmg.Tds.TestProxy
         }
 
         public IReadOnlyList<SqlTranslation> Translations { get; }
+
+        public bool TryApply(string sql, out string result, out string replacementName)
+        {
+            foreach (var txl in Translations)
+            {
+                if (txl.TryApply(sql, out result))
+                {
+                    replacementName = txl.Name;
+                    return true;
+                }
+            }
+
+            result = sql;
+            replacementName = null;
+            return false;
+        }
     }
 }

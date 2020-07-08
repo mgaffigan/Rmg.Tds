@@ -8,9 +8,9 @@ namespace Rmg.Tds.Protocol.DataTypes
     {
         private static readonly PlpVarBinaryParser BaseParser = new PlpVarBinaryParser();
 
-        public override string DeserializeValue(ref TdsPayloadReader reader)
+        public override string DeserializeValue(ref TdsPayloadReader reader, TdsTypeInfo type)
         {
-            var byteStream = BaseParser.DeserializeValue(ref reader);
+            var byteStream = BaseParser.DeserializeValue(ref reader, type);
             if (byteStream == null)
             {
                 return null;
@@ -18,7 +18,7 @@ namespace Rmg.Tds.Protocol.DataTypes
             return Encoding.ASCII.GetString(byteStream);
         }
 
-        public override int GetSerializedValueLength(string value)
+        public override int GetSerializedValueLength(string value, TdsTypeInfo type)
         {
             if (value == null)
             {
@@ -28,16 +28,16 @@ namespace Rmg.Tds.Protocol.DataTypes
             return BaseParser.GetPlpLen(Encoding.ASCII.GetByteCount(value));
         }
 
-        public override void SerializeValue(ref TdsPayloadWriter writer, string value)
+        public override void SerializeValue(ref TdsPayloadWriter writer, string value, TdsTypeInfo type)
         {
             if (value == null)
             {
-                BaseParser.SerializeValue(ref writer, null);
+                BaseParser.SerializeValue(ref writer, null, type);
             }
             else
             {
                 var data = Encoding.ASCII.GetBytes(value);
-                BaseParser.SerializeValue(ref writer, data);
+                BaseParser.SerializeValue(ref writer, data, type);
             }
         }
     }
@@ -46,9 +46,9 @@ namespace Rmg.Tds.Protocol.DataTypes
     {
         private static readonly PlpVarBinaryParser BaseParser = new PlpVarBinaryParser();
 
-        public override string DeserializeValue(ref TdsPayloadReader reader)
+        public override string DeserializeValue(ref TdsPayloadReader reader, TdsTypeInfo type)
         {
-            var byteStream = BaseParser.DeserializeValue(ref reader);
+            var byteStream = BaseParser.DeserializeValue(ref reader, type);
             if (byteStream == null)
             {
                 return null;
@@ -56,7 +56,7 @@ namespace Rmg.Tds.Protocol.DataTypes
             return Encoding.Unicode.GetString(byteStream);
         }
 
-        public override int GetSerializedValueLength(string value)
+        public override int GetSerializedValueLength(string value, TdsTypeInfo type)
         {
             if (value == null)
             {
@@ -66,16 +66,16 @@ namespace Rmg.Tds.Protocol.DataTypes
             return BaseParser.GetPlpLen(Encoding.Unicode.GetByteCount(value));
         }
 
-        public override void SerializeValue(ref TdsPayloadWriter writer, string value)
+        public override void SerializeValue(ref TdsPayloadWriter writer, string value, TdsTypeInfo type)
         {
             if (value == null)
             {
-                BaseParser.SerializeValue(ref writer, null);
+                BaseParser.SerializeValue(ref writer, null, type);
             }
             else
             {
                 var data = Encoding.Unicode.GetBytes(value);
-                BaseParser.SerializeValue(ref writer, data);
+                BaseParser.SerializeValue(ref writer, data, type);
             }
         }
     }

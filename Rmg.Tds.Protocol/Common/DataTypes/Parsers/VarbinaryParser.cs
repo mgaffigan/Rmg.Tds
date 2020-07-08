@@ -6,7 +6,7 @@ namespace Rmg.Tds.Protocol.DataTypes
 {
     internal class VarbinaryParser : DataTypeParser<byte[]>
     {
-        public override byte[] DeserializeValue(ref TdsPayloadReader reader)
+        public override byte[] DeserializeValue(ref TdsPayloadReader reader, TdsTypeInfo type)
         {
             var len = reader.ReadInt16LE();
             if (len == 0xffff)
@@ -19,12 +19,12 @@ namespace Rmg.Tds.Protocol.DataTypes
             }
         }
 
-        public override int GetSerializedValueLength(byte[] value)
+        public override int GetSerializedValueLength(byte[] value, TdsTypeInfo type)
         {
             return 2 + (value == null ? 0 : value.Length);
         }
 
-        public override void SerializeValue(ref TdsPayloadWriter writer, byte[] value)
+        public override void SerializeValue(ref TdsPayloadWriter writer, byte[] value, TdsTypeInfo type)
         {
             if (value == null)
             {
