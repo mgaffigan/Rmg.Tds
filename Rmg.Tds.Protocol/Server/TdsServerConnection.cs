@@ -14,7 +14,6 @@ namespace Rmg.Tds.Protocol.Server
         private readonly TdsServerListener Parent;
         private readonly Socket Socket;
         private ITdsServerHandler Handler;
-        private Task ReadPromise;
         private readonly object syncWriteCommand;
         private bool IsWriteCommandActive;
         private readonly object syncCurrentCommand;

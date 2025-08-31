@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Runtime.Serialization;
 
 namespace Rmg.Tds.TestProxy
 {
-    [Serializable]
     internal class SqlTranslationParseException : Exception
     {
         public int Line { get; }
@@ -35,10 +33,6 @@ namespace Rmg.Tds.TestProxy
 
             this.File = file ?? throw new ArgumentNullException(nameof(file));
             this.Line = line;
-        }
-
-        protected SqlTranslationParseException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
         }
     }
 }
