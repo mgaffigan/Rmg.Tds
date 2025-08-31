@@ -1,6 +1,6 @@
-# TDS Reverse Proxy for SQL Server
+﻿# TDS Reverse Proxy for SQL Server
 
-This project provides a simple reverse proxy for Microsoft SQL Server<sup>�</sup> using 
+This project provides a simple reverse proxy for Microsoft SQL Server<sup>®</sup> using 
 the Tabular Data Stream (TDS) protocol. It allows you to forward SQL Server 
 connections from one server to another, enabling scenarios such as load 
 balancing, failover, caching, interception, or routing traffic through a 
@@ -10,6 +10,12 @@ Currently, the proxy supports TDS versions 7.0 through 7.4, which correspond
 to SQL Server versions from 2000 to 2019. It also implements the SQL Server
 Resolution Protocol (SSRP) to resolve server names and ports for named
 instances.
+
+## Maturity
+
+⚠️ This project is in development and is not suitable for production use.
+It runs, it works. It will process queries. But eventually you will find a 
+bug and it will crash.
 
 ## Overview
 
@@ -39,4 +45,4 @@ for details.  For commercial licensing, please contact the author.
 
 This project is a third-party, independent effort and has no relationship 
 with Microsoft Corporation, based on public protocol specification documents.
-Microsoft� and SQL Server� are registered trademarks of Microsoft Corporation.
+Microsoft® and SQL Server® are registered trademarks of Microsoft Corporation.
