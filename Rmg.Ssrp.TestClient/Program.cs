@@ -16,7 +16,7 @@ namespace Rmg.Ssrp.TestClient
 
         private static async Task Run()
         {
-            var server = IPEndpointParser.Parse("v-dbserver1.intouchpharma.local", 1434);
+            var server = IPEndpointParser.Parse("v-dbserver1", 1434);
             using (var client = new UnicastSsrpClient(server.AddressFamily, Encoding.ASCII))
             {
                 await client.SendInstanceRequestAsync(server, "PROD");

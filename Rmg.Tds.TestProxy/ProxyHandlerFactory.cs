@@ -13,7 +13,7 @@ namespace Rmg.Tds.TestProxy
 
         public SqlTranslationTable ReloadTranslationTable()
         {
-            return this.TranslationTable = new SqlTranslationTable(@"C:\Users\mgaffigan\source\repos\Rmg.Tds\Rmg.Tds.TestProxy\Translations");
+            return this.TranslationTable = new SqlTranslationTable(@"C:\dev\source\repos\Rmg.Tds\Rmg.Tds.TestProxy\Translations");
         }
 
         public ITdsServerHandler CreateHandler()
